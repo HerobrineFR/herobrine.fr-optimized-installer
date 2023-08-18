@@ -1,12 +1,11 @@
-package io.github.gaming32.additiveinstaller
+package io.github.HerobrineFR.herobrinemodpackinstaller
 
 import io.github.oshai.KotlinLogging
 import javax.swing.JProgressBar
 import javax.swing.SwingUtilities
 
-private val logger = KotlinLogging.logger {}
-
 class JProgressBarProgressHandler(private val bar: JProgressBar) : ProgressHandler {
+    private val logger = KotlinLogging.logger {}
     private var prepared = false
 
     override fun prepareNewTaskSet(prepareMessage: String) = SwingUtilities.invokeLater {

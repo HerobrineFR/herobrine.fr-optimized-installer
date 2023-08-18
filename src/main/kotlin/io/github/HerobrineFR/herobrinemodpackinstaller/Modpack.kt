@@ -1,4 +1,4 @@
-package io.github.gaming32.additiveinstaller
+package io.github.HerobrineFR.herobrinemodpackinstaller
 
 import com.google.gson.JsonElement
 import javax.imageio.ImageIO
@@ -24,8 +24,10 @@ class Modpack(val id: String) {
             result as Map<String, Map<String, PackVersion>>
         }
 
+    val title = requestCriticalJson("$PROJECT_BASE/$id").asJsonObject["title"].asString
+
     val name = id.capitalize()
-    val windowTitle = I18N.getString("window.title", name)
+    val windowTitle = I18N.getString("window.title", title)
     val image = ImageIO.read(javaClass.getResource("/${id}96.png"))!!
     val launcherIcon = javaClass.getResource("/${id}32.png")
         ?.readBytes()

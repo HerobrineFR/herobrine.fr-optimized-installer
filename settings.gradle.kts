@@ -1,3 +1,3 @@
 
-rootProject.name = "additive-installer"
+rootProject.name = "herobrine.fr-optimized-installer"
 

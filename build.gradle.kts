@@ -9,11 +9,11 @@ plugins {
     id("de.undercouch.download") version "5.4.0"
 }
 
-group = "io.github.gaming32"
-version = "1.0.1"
+group = "io.github.HerobrineFR"
+version = "0.1.0"
 
 application {
-    mainClass.set("io.github.gaming32.additiveinstaller.MainKt")
+    mainClass.set("io.github.HerobrineFR.herobrinemodpackinstaller.MainKt")
 }
 
 repositories {
@@ -36,7 +36,7 @@ dependencies {
 }
 
 blossom {
-    replaceToken("<<VERSION>>", project.version, "src/main/kotlin/io/github/gaming32/additiveinstaller/versionHolder.kt")
+    replaceToken("<<VERSION>>", project.version, "src/main/kotlin/io/github/HerobrineFR/herobrine-modpackinstaller/versionHolder.kt")
 }
 
 kotlin {

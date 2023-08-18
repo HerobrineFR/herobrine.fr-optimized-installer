@@ -1,4 +1,4 @@
-package io.github.gaming32.additiveinstaller
+package io.github.HerobrineFR.herobrinemodpackinstaller
 
 interface ProgressHandler {
     fun prepareNewTaskSet(prepareMessage: String)

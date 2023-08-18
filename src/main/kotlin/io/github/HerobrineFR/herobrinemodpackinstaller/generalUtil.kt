@@ -1,4 +1,4 @@
-package io.github.gaming32.additiveinstaller
+package io.github.HerobrineFR.herobrinemodpackinstaller
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -51,7 +51,7 @@ fun Component.withLabel(label: String? = null) = JPanel().apply {
 fun request(url: String): InputStream {
     logger.info("Requesting $url")
     val cnxn = URL(url).openConnection()
-    cnxn.setRequestProperty("User-Agent", "Additive Installer/$VERSION")
+    cnxn.setRequestProperty("User-Agent", "Herobrine.fr-Optimized Installer/$VERSION")
     return cnxn.getInputStream()
 }
 
@@ -64,7 +64,7 @@ fun requestCriticalJson(url: String) = try {
     JOptionPane.showMessageDialog(
         null,
         I18N.getString("modrinth.access.failed"),
-        "Additive Installer",
+        "Herobrine.fr-Optimized Installer",
         JOptionPane.ERROR_MESSAGE
     )
     exitProcess(1)

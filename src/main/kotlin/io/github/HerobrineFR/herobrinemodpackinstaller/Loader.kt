@@ -1,4 +1,4 @@
-package io.github.gaming32.additiveinstaller
+package io.github.HerobrineFR.herobrinemodpackinstaller
 
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersion

@@ -1,4 +1,4 @@
-package io.github.gaming32.additiveinstaller
+package io.github.HerobrineFR.herobrinemodpackinstaller
 
 import com.google.common.jimfs.Configuration
 import com.google.common.jimfs.Jimfs
@@ -14,7 +14,10 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
+import java.awt.BorderLayout
 import kotlin.io.path.*
+import javax.swing.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -22,7 +25,6 @@ class PackInstaller(
     private val packVersion: PackVersion, private val destination: Path, private  val progressHandler: ProgressHandler
 ) : AutoCloseable {
     companion object {
-        const val YOSBR_ID = "WwbubTsV"
         val DOT_MINECRAFT = Path(
             when (operatingSystem) {
                 OperatingSystem.WINDOWS -> "${System.getenv("APPDATA")}\\.minecraft"
@@ -32,6 +34,7 @@ class PackInstaller(
         )
         val VERSIONS = DOT_MINECRAFT / "versions"
         val LAUNCHER_PROFILES = DOT_MINECRAFT / "launcher_profiles.json"
+        var INSTALLER_VERSION = "1"
     }
 
     private val jimfs = Jimfs.newFileSystem(Configuration.unix())!!
@@ -153,8 +156,91 @@ class PackInstaller(
 
         progressHandler.newTaskSet(files.size())
 
+        var modrinth_api_base = "api.modrinth.com/v2/project/"
+
+        val optionalFilesMap = mutableMapOf<String, String>()
+        val optionalFilesMapPathKey = mutableMapOf<String, String>()
+        files.asSequence().map(JsonElement::getAsJsonObject).forEach { file ->
+            if (file.has("env") && file["env"].asJsonObject.has("client")) {
+                val client = file["env"].asJsonObject["client"].asString
+                if (client != "optional") {
+                    return@forEach
+                }
+                val projectID = file["downloads"].asJsonArray[0].asString.split("/")[4]
+                val project = requestJson("https://$modrinth_api_base$projectID").asJsonObject
+                optionalFilesMapPathKey[file["path"].asString] = project["title"].asString
+                optionalFilesMap[project["title"].asString] = file["path"].asString
+            } else {
+                return@forEach
+            }
+        }
+
+        val optionalFilesToApply = optionalFilesMapPathKey.toMutableMap()
+
+        JDialog().apply {
+            isModal = true
+            isResizable = false
+            title = I18N.getString("optionals.window.title")
+            defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
+
+            // List of checkboxes from optionalFiles
+            val optionalFilesPanel = JPanel()
+            optionalFilesPanel.layout = BoxLayout(optionalFilesPanel, BoxLayout.PAGE_AXIS)
+            optionalFilesPanel.border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
+            for (file in optionalFilesMap.keys) {
+                val checkBox = JCheckBox(file)
+                checkBox.isSelected = false
+                optionalFilesPanel.add(checkBox)
+            }
+            add(optionalFilesPanel)
+            // Resume installation button
+            val resumeButton = JButton(I18N.getString("resume.install"))
+            resumeButton.addActionListener {
+                // Remove unselected files from optionalFiles
+                for (i in 0 until optionalFilesPanel.componentCount) {
+                    val checkBox = optionalFilesPanel.getComponent(i) as JCheckBox
+                    if (!checkBox.isSelected) {
+                        optionalFilesToApply.remove(optionalFilesMap[checkBox.text])
+                    }
+                }
+                // Close dialog
+                isVisible = false
+                dispose()
+            }
+            val iconLabel = JLabel(ImageIcon(packVersion.modpack.image))
+            contentPane = JPanel().apply {
+                layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
+                border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
+                add(JPanel().apply {
+                    layout = BorderLayout()
+                    border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
+                    add(iconLabel, BorderLayout.PAGE_START)
+                })
+                add(Box.createVerticalStrut(15))
+                add(optionalFilesPanel)
+                add(Box.createVerticalStrut(15))
+                add(JPanel().apply {
+                    layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
+                    border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
+                    add(JPanel().apply {
+                        layout = BorderLayout()
+                        add(resumeButton)
+                    })
+                })
+                add(Box.createVerticalStrut(10))
+            }
+            pack()
+            setLocationRelativeTo(null)
+            isVisible = true
+        }
+
         files.asSequence().map(JsonElement::getAsJsonObject).forEach { file ->
             val path = file["path"].asString
+            if (file.has("env") && file["env"].asJsonObject.has("client") && file["env"].asJsonObject["client"].asString == "optional") {
+                if (!optionalFilesToApply.containsKey(path)) {
+                    return@forEach
+                }
+            }
             progressHandler.newTask(I18N.getString("downloading.file", path))
             val (destRoot, dest) = if (path.startsWith("mods/")) {
                 Pair(modsDir, modsDir / path.substring(5))
@@ -166,10 +252,6 @@ class PackInstaller(
             }
             dest.parent.createDirectories()
             val downloadUrl = file["downloads"].asJsonArray.first().asString
-            if ("/$YOSBR_ID/" in downloadUrl && "yosbr" in file["path"].asString) {
-                logger.info("Skipping yosbr")
-                return@forEach
-            }
             download(file, downloadUrl, dest)
         }
 
@@ -182,23 +264,17 @@ class PackInstaller(
 
         for (override in overrides) {
             var relative = override.relativeTo(overridesDir).toString()
-            var overwrite = true
-            if (relative.startsWith("config/yosbr/")) {
-                relative = relative.substring(13)
-                overwrite = false
-                logger.info("Override $relative is in yosbr")
+            if (relative.startsWith("mods/")) {
+                relative = (modsDir / relative.substring(5)).toString()
             }
+            var overwrite = true
             progressHandler.newTask(I18N.getString("extracting.override", relative))
             val dest = destination / relative
             try {
                 dest.parent.createDirectories()
             } catch (_: IOException) {
             }
-            try {
-                override.copyTo(dest, overwrite)
-            } catch (_: FileAlreadyExistsException) {
-                logger.info("Skipping override $relative because it was in yosbr and the file already exists")
-            }
+            override.copyTo(dest, overwrite)    
         }
     }
 
