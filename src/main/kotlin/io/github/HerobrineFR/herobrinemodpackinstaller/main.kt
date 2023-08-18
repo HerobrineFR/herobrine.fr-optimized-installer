@@ -4,7 +4,9 @@ import com.formdev.flatlaf.FlatDarkLaf
 import com.formdev.flatlaf.FlatLightLaf
 import com.formdev.flatlaf.themes.FlatMacDarkLaf
 import com.formdev.flatlaf.themes.FlatMacLightLaf
+import com.google.gson.JsonObject
 import io.github.oshai.KotlinLogging
+import io.github.HerobrineFR.herobrinemodpackinstaller.getVersionCheck
 import java.awt.BorderLayout
 import java.util.*
 import javax.swing.*
@@ -13,6 +15,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {}
 
@@ -37,6 +40,16 @@ fun main() {
 
     val modpack = Modpack("herobrine.fr-modpack")
     var selectedPack = modpack
+
+    var version_check = getVersionCheck()
+
+    // verify that the version is posterior to the lower authorized version
+    if (VERSION == "<<VERSION>>" || !(versionIsAnterior(version_check["lower_authorized_version"].asString, VERSION))) {
+        val url = version_check["last_version"].asJsonObject["url"].asString
+        val message = "<html>This version ($VERSION) of the installer is outdated (version posterior of ${version_check["lower_authorized_version"].asString} needed), please download the latest version at <a href=\"$url\">$url</a></html> (if the link is not clickable, you can also find it on our discord server)"
+        JOptionPane.showMessageDialog(null, message, "Outdated version", JOptionPane.INFORMATION_MESSAGE)
+        exitProcess(0)
+    }
 
     SwingUtilities.invokeLater { JFrame(selectedPack.windowTitle).apply root@ {
         iconImage = selectedPack.image

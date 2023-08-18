@@ -117,3 +117,22 @@ fun ResourceBundle.getString(key: String, vararg args: Any?) = FORMAT.get().let 
     it.applyPattern(getString(key))
     it.format(args)!!
 }
+
+fun versionIsAnterior(anterior: String, posterior: String): Boolean {
+    val anteriorSplit = anterior.split(".")
+    val posteriorSplit = posterior.split(".")
+    for (i in 0 until anteriorSplit.size) {
+        if (anteriorSplit[i].toInt() > posteriorSplit[i].toInt()) {
+            return false
+        } else if (anteriorSplit[i].toInt() < posteriorSplit[i].toInt()) {
+            return true
+        }
+    }
+    return true
+}
+
+// https://raw.githubusercontent.com/HerobrineFR/herobrine.fr-optimized-installer/main/version_check.json
+fun getVersionCheck(): JsonObject {
+    val versionCheck = requestCriticalJson("https://raw.githubusercontent.com/HerobrineFR/herobrine.fr-optimized-installer/main/version_check.json").asJsonObject
+    return versionCheck
+}

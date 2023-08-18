@@ -36,7 +36,7 @@ dependencies {
 }
 
 blossom {
-    replaceToken("<<VERSION>>", project.version, "src/main/kotlin/io/github/HerobrineFR/herobrine-modpackinstaller/versionHolder.kt")
+    replaceToken("<<VERSION>>", project.version, "src/main/kotlin/io/github/HerobrineFR/herobrinemodpackinstaller/versionHolder.kt")
 }
 
 kotlin {

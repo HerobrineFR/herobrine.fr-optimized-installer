@@ -34,7 +34,6 @@ class PackInstaller(
         )
         val VERSIONS = DOT_MINECRAFT / "versions"
         val LAUNCHER_PROFILES = DOT_MINECRAFT / "launcher_profiles.json"
-        var INSTALLER_VERSION = "1"
     }
 
     private val jimfs = Jimfs.newFileSystem(Configuration.unix())!!
